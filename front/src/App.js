@@ -3,22 +3,41 @@ import React, { useState } from 'react';
 function App() {
   const [consumo, setConsumo] = useState('');
   const [fornecedores, setFornecedores] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-
-  
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const response = await fetch('https://spaclarkeenergia-1.onrender.com/fornecedores', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ consumo_mensal_kwh: parseFloat(consumo) }),
-    });
+    // Validação de Consumo
+    if (consumo > 0 && !isNaN(consumo)) {
+      try {
+        setLoading(true);
+        setError(null);
 
-    const data = await response.json();
-    setFornecedores(data);
+        // Requisição ao backend
+        const response = await fetch('https://spaclarkeenergia-1.onrender.com/fornecedores', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ consumo_mensal_kwh: parseFloat(consumo) }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro ao buscar fornecedores');
+        }
+
+        const data = await response.json();
+        setFornecedores(data);
+      } catch (err) {
+        setError(err.message || 'Erro ao buscar fornecedores.');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      alert("Informe um valor válido para o consumo.");
+    }
   };
 
   return (
@@ -33,9 +52,13 @@ function App() {
           required
           style={styles.input}
         />
-        <button type="submit" style={styles.button}>Enviar</button>
+        <button type="submit" style={styles.button} disabled={loading}>
+          {loading ? 'Carregando...' : 'Enviar'}
+        </button>
       </form>
+
       <div style={styles.results}>
+        {error && <p style={styles.error}>{error}</p>}
         {fornecedores.length > 0 ? (
           <>
             <h2 style={styles.subtitle}>Fornecedores disponíveis</h2>
@@ -60,7 +83,7 @@ function App() {
             </ul>
           </>
         ) : (
-          <p style={styles.noResults}>Nenhum fornecedor disponível no momento.</p>
+          !loading && <p style={styles.noResults}>Nenhum fornecedor disponível no momento.</p>
         )}
       </div>
     </div>
@@ -70,12 +93,12 @@ function App() {
 const styles = {
   container: {
     fontFamily: 'Arial, sans-serif',
-    backgroundColor: '#f0f4f7', // Cinza claro para fundo
+    backgroundColor: '#f0f4f7',
     padding: '20px',
     minHeight: '100vh',
   },
   title: {
-    color: '#004e7c', // Azul escuro
+    color: '#004e7c',
     textAlign: 'center',
     marginBottom: '20px',
   },
@@ -133,6 +156,10 @@ const styles = {
   noResults: {
     textAlign: 'center',
     color: '#7a7a7a',
+  },
+  error: {
+    textAlign: 'center',
+    color: 'red',
   },
 };
 
