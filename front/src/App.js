@@ -9,7 +9,7 @@ function App() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const response = await fetch('http://localhost:5000/fornecedores', {
+    const response = await fetch('https://spaclarkeenergia-1.onrender.com/fornecedores', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
