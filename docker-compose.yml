@@ -1,0 +1,23 @@
+services:
+  back:
+    build: ./back
+    container_name: back                 # Nome personalizado para o contêiner
+    ports:
+      - "5000:5000"                         # Mapeamento de portas (host:container)
+    volumes:
+      - ./back:/app                      # Volume para persistir dados
+    networks:
+      - app-network
+
+  front:
+    build: ./front # Nome e tag da imagem existente
+    container_name: front                # Nome personalizado para o contêiner
+    ports:
+      - "3000:3000"                         # Mapeamento de portas
+    depends_on:
+      - back                             # Garante que o backend inicie antes do frontend
+    networks:
+      - app-network
+networks:
+  app-network:
+    driver: bridge
