@@ -5,17 +5,17 @@ function App() {
   const [fornecedores, setFornecedores] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const fornecedoresPorPagina = 5; // Número de fornecedores por página
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    // Validação de Consumo
     if (consumo > 0 && !isNaN(consumo)) {
       try {
         setLoading(true);
         setError(null);
 
-        // Requisição ao backend
         const response = await fetch('https://spaclarkeenergia-1.onrender.com/fornecedores', {
           method: 'POST',
           headers: {
@@ -30,6 +30,7 @@ function App() {
 
         const data = await response.json();
         setFornecedores(data);
+        setCurrentPage(1); // Volta para a primeira página ao fazer uma nova busca
       } catch (err) {
         setError(err.message || 'Erro ao buscar fornecedores.');
       } finally {
@@ -37,6 +38,27 @@ function App() {
       }
     } else {
       alert("Informe um valor válido para o consumo.");
+    }
+  };
+
+  // Função para obter fornecedores da página atual
+  const fornecedoresDaPaginaAtual = fornecedores.slice(
+    (currentPage - 1) * fornecedoresPorPagina,
+    currentPage * fornecedoresPorPagina
+  );
+
+  // Controle da paginação
+  const totalPages = Math.ceil(fornecedores.length / fornecedoresPorPagina);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
     }
   };
 
@@ -59,11 +81,11 @@ function App() {
 
       <div style={styles.results}>
         {error && <p style={styles.error}>{error}</p>}
-        {fornecedores.length > 0 ? (
+        {fornecedoresDaPaginaAtual.length > 0 ? (
           <>
             <h2 style={styles.subtitle}>Fornecedores disponíveis</h2>
             <ul style={styles.list}>
-              {fornecedores.map((fornecedor, index) => (
+              {fornecedoresDaPaginaAtual.map((fornecedor, index) => (
                 <li key={index} style={styles.listItem}>
                   <img
                     src={fornecedor.logo}
@@ -81,6 +103,26 @@ function App() {
                 </li>
               ))}
             </ul>
+            {/* Navegação de página */}
+            <div style={styles.pagination}>
+              <button
+                onClick={handlePreviousPage}
+                disabled={currentPage === 1}
+                style={styles.pageButton}
+              >
+                Anterior
+              </button>
+              <span style={styles.pageInfo}>
+                Página {currentPage} de {totalPages}
+              </span>
+              <button
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                style={styles.pageButton}
+              >
+                Próxima
+              </button>
+            </div>
           </>
         ) : (
           !loading && <p style={styles.noResults}>Nenhum fornecedor disponível no momento.</p>
@@ -160,6 +202,29 @@ const styles = {
   error: {
     textAlign: 'center',
     color: 'red',
+  },
+  pagination: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: '20px',
+  },
+  pageButton: {
+    padding: '10px 20px',
+    backgroundColor: '#004e7c',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    margin: '0 10px',
+    disabled: {
+      opacity: 0.5,
+      cursor: 'not-allowed',
+    },
+  },
+  pageInfo: {
+    fontWeight: 'bold',
+    color: '#004e7c',
   },
 };
 
